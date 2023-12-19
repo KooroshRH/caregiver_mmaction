@@ -8,7 +8,7 @@ model = dict(
         gcn_with_res=True,
         tcn_type='mstcn',
         graph_cfg=dict(layout='nturgb+d', mode='spatial')),
-    cls_head=dict(type='GCNHead', num_classes=60, in_channels=256, dropout=0.2))
+    cls_head=dict(type='GCNHead', num_classes=6, in_channels=256, dropout=0.2))
 
 dataset_type = 'PoseDataset'
 ann_file = 'data/skeleton/caregiver_3d.pkl'
