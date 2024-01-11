@@ -135,7 +135,7 @@ class Graph:
             assert 'inward' in layout
             assert 'center' in layout
         else:
-            assert layout in ['openpose', 'nturgb+d', 'coco']
+            assert layout in ['openpose', 'nturgb+d', 'coco', 'caregiver']
 
         self.set_layout(layout)
         self.hop_dis = get_hop_distance(self.num_node, self.inward, max_hop)
@@ -164,6 +164,12 @@ class Graph:
                              (23, 8), (24, 12), (25, 12)]
             self.inward = [(i - 1, j - 1) for (i, j) in neighbor_base]
             self.center = 21 - 1
+        elif layout == 'caregiver':
+            self.num_node = 29
+            self.inward = [(0, 1), (0, 2), (0, 3), (0, 7), (3, 5), (5, 6), (7, 8), (8, 9), (3, 4), (7, 4), (4, 10), (4, 11),
+                           (4, 12), (10, 11), (10, 13), (13, 14), (14, 25), (14, 15), (15, 16), (16, 17), (16, 18), (16, 26),
+                           (11, 19), (19, 20), (20, 27), (20, 21), (21, 22), (22, 23), (22, 24), (22, 28)]
+            self.center = 12
         elif layout == 'coco':
             self.num_node = 17
             self.inward = [(15, 13), (13, 11), (16, 14), (14, 12), (11, 5),

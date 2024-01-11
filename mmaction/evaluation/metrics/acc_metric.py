@@ -189,6 +189,11 @@ class AccMetric(BaseMetric):
                     mAP = mmit_mean_average_precision(preds, labels)
                     eval_results['mmit_mean_average_precision'] = mAP
 
+        conf_mat = ConfusionMatrix.calculate(preds, labels, num_classes=6)
+        print(conf_mat)
+
+        eval_results['f1_score'] = self.calculate_f1_score(conf_mat)
+
         return eval_results
 
 
