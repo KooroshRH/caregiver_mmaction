@@ -143,8 +143,8 @@ for test_sample_path in test_list:
     windows = split_frames_into_samples(frame_list)
 
     for index, window in enumerate(windows):
-        test_name_list.append("{}_{}_{}_{}".format(subject_map[segment_id], segment_id, train_labels[segment_id], str(index)))
-        sample_info = {"frame_dir": "{}_{}_{}_{}".format(subject_map[segment_id], segment_id, train_labels[segment_id], str(index)),
+        test_name_list.append("{}_{}_{}_{}".format(subject_map[segment_id], segment_id, test_labels[segment_id], str(index)))
+        sample_info = {"frame_dir": "{}_{}_{}_{}".format(subject_map[segment_id], segment_id, test_labels[segment_id], str(index)),
                    "label": int(test_labels[segment_id]),
                    "total_frames": len(window)}
         keypoints = np.empty([1, len(window), final_num_markers, 3])
@@ -166,13 +166,13 @@ for subject_id in subject_ids:
     new_test_name_list = []
     for name in full_list:
         if name.startswith(subject_id):
-            new_test_name_list.append(subject_id)
+            new_test_name_list.append(name)
         else:
-            new_train_name_list.append(subject_id)
+            new_train_name_list.append(name)
     
     split_dict = {'xsub_train': new_train_name_list, 'xsub_val': new_test_name_list}
     caregiver_3d = {'split': split_dict, 'annotations': annot_list}
-    print(caregiver_3d)
+    print(split_dict)
 
-    with open('caregiver_3d_loso_{}'.format(subject_id), 'wb') as file:
+    with open('caregiver_3d_loso_{}.pkl'.format(subject_id), 'wb') as file:
         pickle.dump(caregiver_3d, file)
