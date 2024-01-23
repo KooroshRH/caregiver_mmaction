@@ -20,5 +20,5 @@ vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(type='ActionVisualizer', vis_backends=vis_backends)
 
 log_level = 'INFO'
-load_from = 'https://download.openmmlab.com/mmaction/v1.0/skeleton/stgcnpp/stgcnpp_8xb16-joint-motion-u100-80e_ntu60-xsub-keypoint-3d/stgcnpp_8xb16-joint-motion-u100-80e_ntu60-xsub-keypoint-3d_20221230-650de5cc.pth'
+load_from = '/cluster/projects/kite/koorosh/caregiver_checkpoints/stgcnpp_8xb16-joint-motion-u100-80e_ntu60-xsub-keypoint-3d_20221230-650de5cc.pth'
 resume = False
