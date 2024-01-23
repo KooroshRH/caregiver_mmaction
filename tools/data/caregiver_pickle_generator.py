@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import csv
 import pickle
+import copy
 
 points_map = {0: 12, 1: 4, 2: 2, 3: 1, 4: 7, 5: 8, 6: 9, 7: 9, 8: 3, 9: 5, 10: 6, 11: 6, 12: 11, 13: 20, 14: 22, 15: 24, 16: 9, 17: 14, 18: 16, 19: 18, 20: 4, 21: 9, 22: 9, 23: 6, 24: 6}
 activity_label_map = {2: 0, 3: 1, 4: 2, 6: 3, 9: 4, 12: 5}
@@ -26,6 +27,126 @@ def add_noise(data, noise_level=0.01):
     """
     noise = np.random.normal(0, noise_level, data.shape)
     return data + noise
+
+def rotate_frame(frame_data, angle, axis='x'):
+    """
+    Rotate the frame data around the given axis by the given angle.
+    
+    Parameters:
+    - frame_data: Input frame data (numpy array)
+    - angle: Rotation angle in degrees
+    - axis: Axis to rotate around ('x', 'y', or 'z')
+    
+    Returns:
+    - Rotated frame data (numpy array)
+    """
+    angle = np.deg2rad(angle)
+    if axis == 'x':
+        rotation_matrix = np.array([[1, 0, 0],
+                                    [0, np.cos(angle), -np.sin(angle)],
+                                    [0, np.sin(angle), np.cos(angle)]])
+    elif axis == 'y':
+        rotation_matrix = np.array([[np.cos(angle), 0, np.sin(angle)],
+                                    [0, 1, 0],
+                                    [-np.sin(angle), 0, np.cos(angle)]])
+    else:  # axis == 'z'
+        rotation_matrix = np.array([[np.cos(angle), -np.sin(angle), 0],
+                                    [np.sin(angle), np.cos(angle), 0],
+                                    [0, 0, 1]])
+    return np.dot(frame_data, rotation_matrix)
+
+def scale_frame(frame_data, scaling_factor):
+    """
+    Uniformly scale the frame data by the scaling factor.
+    
+    Parameters:
+    - frame_data: Input frame data (numpy array)
+    - scaling_factor: Scaling factor
+    
+    Returns:
+    - Scaled frame data (numpy array)
+    """
+    return frame_data * scaling_factor
+
+def mirror_frame(frame_data, axis=0):
+    """
+    Mirror the frame data along the given axis.
+    
+    Parameters:
+    - frame_data: Input frame data (numpy array)
+    - axis: Axis to mirror along (0 for x, 1 for y, 2 for z)
+    
+    Returns:
+    - Mirrored frame data (numpy array)
+    """
+    mirrored_data = np.copy(frame_data)
+    mirrored_data[:, axis] = -mirrored_data[:, axis]
+    return mirrored_data
+
+def augment_data(frame_list, augmentation_method):
+    """
+    Apply a random augmentation to the frame data.
+    
+    Parameters:
+    - frame_list: List of frames (each frame is a numpy array)
+    
+    Returns:
+    - Augmented list of frames
+    """
+    choice = augmentation_method
+
+    if choice == 'rotate':
+        angle = np.random.uniform(-30, 30)  # rotate between -30 and 30 degrees
+        axis = np.random.choice(['x', 'y', 'z'])
+    elif choice == 'scale':
+        factor = np.random.uniform(0.8, 1.2)  # scale between 0.8 and 1.2
+    elif choice == 'mirror':
+        axis = np.random.choice([0, 1, 2])
+
+    augmented_list = []
+    for frame_data in frame_list:
+        if choice == 'noise':
+            augmented_list.append(add_noise(frame_data))
+        elif choice == 'rotate':
+            augmented_list.append(rotate_frame(frame_data, angle, axis))
+        elif choice == 'scale':
+            augmented_list.append(scale_frame(frame_data, factor))
+        elif choice == 'mirror':
+            augmented_list.append(mirror_frame(frame_data, axis))
+
+    return augmented_list
+
+def augment_selected_samples(name_list, annot_list):
+    """
+    Perform data augmentation on specific samples in the annot_list.
+
+    Parameters:
+    - name_list: List of names of the samples to augment.
+    - annot_list: List of all annotations (dictionaries).
+    - augmentation_methods: List of augmentation methods to apply.
+
+    Returns:
+    - Updated annot_list with augmented data for the specified samples.
+    """
+    augmented_annot_list = []
+
+    for sample in annot_list:
+        if sample['frame_dir'] in name_list:
+            augmentation_method = np.random.choice(['noise', 'rotate', 'scale', 'mirror'])
+            # Perform augmentation
+            frames = sample['keypoint'][0]  # Assuming keypoints are stored as [1, num_frames, num_markers, 3]
+            augmented_frames = copy.deepcopy(frames)
+
+            augmented_frames = augment_data(augmented_frames, augmentation_method)
+
+            # Update sample info with augmented data
+            sample['keypoint'][0] = augmented_frames
+            augmented_annot_list.append(sample)
+        else:
+            # If the sample is not in the list, just add it without changes
+            augmented_annot_list.append(sample)
+
+    return augmented_annot_list
 
 def fill_missing(frame_data, target_index):
     counter = 0
@@ -153,9 +274,11 @@ for test_sample_path in test_list:
         sample_info["keypoint"] = keypoints
         annot_list.append(sample_info)
 
+augmented_annot_list = augment_selected_samples(train_name_list, annot_list)
+
 split_dict = {'xsub_train': train_name_list, 'xsub_val': test_name_list}
 
-caregiver_3d = {'split': split_dict, 'annotations': annot_list}
+caregiver_3d = {'split': split_dict, 'annotations': augmented_annot_list}
 
 with open('caregiver_3d.pkl', 'wb') as file:
     pickle.dump(caregiver_3d, file)
@@ -170,8 +293,10 @@ for subject_id in subject_ids:
         else:
             new_train_name_list.append(name)
     
+    augmented_annot_list = augment_selected_samples(new_train_name_list, annot_list)
+
     split_dict = {'xsub_train': new_train_name_list, 'xsub_val': new_test_name_list}
-    caregiver_3d = {'split': split_dict, 'annotations': annot_list}
+    caregiver_3d = {'split': split_dict, 'annotations': augmented_annot_list}
     print(split_dict)
 
     with open('caregiver_3d_loso_{}.pkl'.format(subject_id), 'wb') as file:
