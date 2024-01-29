@@ -11,7 +11,7 @@ model = dict(
     cls_head=dict(type='GCNHead', num_classes=6, in_channels=256, dropout=0.2))
 
 dataset_type = 'PoseDataset'
-ann_file = '/cluster/projects/kite/koorosh/caregiver_dataset/caregiver_aug_3d_loso_4.pkl'
+ann_file = '/cluster/projects/kite/koorosh/caregiver_dataset/caregiver_3d_loso_4.pkl'
 train_pipeline = [
     dict(type='PreNormalize3D'),
     dict(type='GenSkeFeat', dataset='nturgb+d', feats=['jm']),
